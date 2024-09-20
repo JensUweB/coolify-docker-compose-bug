@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+    pull_policy: build
+    restart: unless-stopped
+    networks:
+      frontend:
+    labels:
+      - traefik.enabled=false
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./default.conf.template:/etc/nginx/templates/default.conf.template
+    depends_on:
+      - app
+    ports:
+      - "8080:8080"
+    networks:
+      frontend:
+    environment:
+      - NGINX_HOST=${NGINX_HOST:-localhost}
+      - NGINX_PORT=${NGINX_PORT:-8080}
+      - NGINX_UPSTREAM=http://app:3000
+      - DNS_SERVER=127.0.0.11
+      - DNS_TTL=5s
+    labels:
+      - traefik.enabled=true
+
+networks:
+  frontend:
